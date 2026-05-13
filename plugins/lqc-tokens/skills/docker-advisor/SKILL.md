@@ -18,49 +18,153 @@ Read the user's prompt and identify:
 - **Access patterns**: lookup by ID? full-text search? relationship traversal? semantic similarity?
 - **Query intent**: what questions will Claude ask of this data?
 - **Data size**: how many rows/nodes/documents?
-- **Longevity**: is this data needed after today's session?
+- **Longevity**: session (default), request (single turn), or user (persist across sessions)?
 
 ### Step 2: Recommend a database
 
 Use the selection guide at `references/db-selection-guide.md`. Recommend 1–2 databases maximum.
 
-### Step 3: Ask about longevity
+### Step 3: Choose isolation level
 
-> "Is this data needed for future sessions beyond today?"
+Present options with `session` pre-selected. The user presses Enter to accept the default:
 
-- **Yes → persistent container**:
-  - Name: `lqc-{project-slug}-{db}` (e.g. `lqc-myapp-falkordb`)
-  - Port: deterministic from range 54000–54999 (pick the lowest unused port via `ss -tlnp | grep 540` or `lsof -i :540[0-9][0-9]`)
-  - Container survives session end
+> "How long should this data persist?
+>
+> **[session]** — auto-cleaned when Claude Code closes ✓ **(default — press Enter)**
+> **[request]** — deleted after this conversation turn
+> **[user]** — persists across all sessions (you clean up manually)"
 
-- **No → ephemeral container**:
-  - Name: `lqc-{8-char-uuid}` (generate with `python3 -c "import uuid; print(uuid.uuid4().hex[:8])"`)
-  - Port: random high port (`shuf -i 40000-49999 -n 1`)
-  - Write to `.claude/lqc-tokens.local.md` for SessionEnd cleanup
+Based on the answer, generate the isolation ID:
 
-### Step 4: Generate artifacts
+**session** — get or create a session ID:
+```bash
+python3 - <<'EOF'
+import re, os, uuid, sys
+p = os.path.expanduser('~/.claude/lqc-tokens.local.md')
+if os.path.exists(p):
+    with open(p) as f:
+        m = re.match(r'^---\n(.*?)---', f.read(), re.DOTALL)
+    if m:
+        try:
+            import yaml
+            fm = yaml.safe_load(m.group(1)) or {}
+            sid = fm.get('session_id')
+            if sid: print(sid); sys.exit(0)
+        except ImportError:
+            pass
+print('sess_' + uuid.uuid4().hex[:8])
+EOF
+```
+If this prints a new ID (not found in the file), write it to `~/.claude/lqc-tokens.local.md` under `session_id`.
 
-Copy the appropriate template from `references/docker-compose-templates/` and fill in:
-- Container name
-- Port mapping
-- Volume name (for persistent) or anonymous volume (for ephemeral)
+**request:**
+```bash
+python3 -c "import uuid; print('req_' + uuid.uuid4().hex[:8])"
+```
 
-Write the composed file to the user's project root as `docker-compose.lqc.yml`.
+**user:**
+```bash
+python3 -c "import os, re; slug = re.sub(r'[^a-z0-9]', '', os.path.basename(os.getcwd()).lower()); print('user_' + (slug or 'default'))"
+```
 
-### Step 5: Start the container
+Set `NAMESPACE=lqc_{ISOLATION_ID}` (e.g. `lqc_sess_a1b2c3d4`).
 
-**If `mcp__docker__*` tools are in the tool list:**
-1. Run `docker compose -f docker-compose.lqc.yml up -d --wait`
-2. The `--wait` flag blocks until the healthcheck passes — no manual polling needed
-3. Return the connection string
+### Step 4: Start base container (if needed) and create namespace
 
-**Otherwise (no Docker MCP):**
-- Output the manual command and tell the user to run it, then continue:
-  ```bash
-  docker compose -f docker-compose.lqc.yml up -d --wait
-  ```
+**Check if base container is already running:**
+```bash
+docker ps --filter "name=lqc-base-{db}" --format "{{.Names}}"
+```
 
-### Step 6: Query the database
+**If NOT running**, write `docker-compose.lqc-base.yml` to the project root with the fixed base container config from `references/isolation-patterns.md`. Use these exact values:
+
+For FalkorDB:
+```yaml
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    container_name: lqc-base-falkordb
+    ports:
+      - "54010:6379"
+    volumes:
+      - lqc-base-falkordb-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+volumes:
+  lqc-base-falkordb-data:
+```
+
+For MongoDB:
+```yaml
+services:
+  mongodb:
+    image: mongo:7
+    container_name: lqc-base-mongodb
+    ports:
+      - "54011:27017"
+    volumes:
+      - lqc-base-mongodb-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: lqc
+      MONGO_INITDB_ROOT_PASSWORD: lqcpass
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+volumes:
+  lqc-base-mongodb-data:
+```
+
+For PostgreSQL:
+```yaml
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lqc-base-postgres
+    ports:
+      - "54012:5432"
+    volumes:
+      - lqc-base-postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: lqcdata
+      POSTGRES_USER: lqc
+      POSTGRES_PASSWORD: lqcpass
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lqc -d lqcdata"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+volumes:
+  lqc-base-postgres-data:
+```
+
+**Start the base container (if not already running):**
+
+If `mcp__docker__*` tools are available:
+```
+docker compose -f docker-compose.lqc-base.yml up -d --wait
+```
+
+Otherwise output the manual command and ask user to run it:
+```bash
+docker compose -f docker-compose.lqc-base.yml up -d --wait
+```
+
+**Create the namespace** (skip for FalkorDB and MongoDB — created implicitly on first write):
+
+For PostgreSQL only:
+```bash
+docker exec lqc-base-postgres psql -U lqc -d lqcdata -c "CREATE SCHEMA IF NOT EXISTS {NAMESPACE};"
+```
+
+### Step 5: Query the database
 
 Once the container is healthy, check whether a DB-native MCP server is available.
 
@@ -94,7 +198,7 @@ mcp__falkordb__query_graph(graphName="<graph-name>", query="MATCH (a:Entity {id:
 >
 > **Enable now (recommended):**
 > 1. Copy `.mcp.json.example` → `.mcp.json` in your project root
-> 2. Edit `.mcp.json`: set `FALKORDB_PORT` to `{HOST_PORT}` under the `falkordb` server env
+> 2. Edit `.mcp.json`: set `FALKORDB_PORT` to `54010` under the `falkordb` server env
 > 3. Restart Claude Code to load the MCP server
 >
 > **Skip for now:** I'll use Python instead — you can enable MCP later for future sessions."
@@ -130,7 +234,7 @@ mcp__mongodb__aggregate(collection="<collection>", pipeline=[{"$group": {"_id": 
 >
 > **Enable now (recommended):**
 > 1. Copy `.mcp.json.example` → `.mcp.json` in your project root
-> 2. Edit `.mcp.json`: update the MongoDB `--connectionString` arg — replace `27017` with `{HOST_PORT}`
+> 2. Edit `.mcp.json`: update the MongoDB `--connectionString` arg — replace `27017` with `54011`
 > 3. Restart Claude Code to load the MCP server
 >
 > **Skip for now:** I'll use Python instead."
@@ -160,7 +264,7 @@ Note: `mcp__postgres__query` is **read-only**. For `CREATE TABLE`, `INSERT`, or 
 >
 > **Enable now (recommended):**
 > 1. Copy `.mcp.json.example` → `.mcp.json` in your project root
-> 2. Edit `.mcp.json`: update the Postgres connection string — replace `5432` with `{HOST_PORT}`
+> 2. Edit `.mcp.json`: update the Postgres connection string — replace `5432` with `54012`
 > 3. Restart Claude Code to load the MCP server
 >
 > **Skip for now:** I'll use Python instead. Note: Python fallback supports writes (INSERT/COPY) too."
@@ -171,22 +275,44 @@ import psycopg2
 conn = psycopg2.connect(host='localhost', port=HOST_PORT, dbname='lqcdata', user='lqc', password='lqcpass')  # replace HOST_PORT with assigned port
 ```
 
-### Step 7: Provide connection string and next steps
+### Step 6: Provide connection string and next steps
 
 Tell the user the connection string, whether MCP or Python path is active, and how to load their data. Include a data-loading snippet.
 
-## Ephemeral container tracking
+## Namespace tracking
 
-After creating an ephemeral container, append to `.claude/lqc-tokens.local.md`:
+After creating a namespace, append to `~/.claude/lqc-tokens.local.md`:
 
 ```yaml
 ---
-ephemeral_containers:
-  - name: {container-name}
-    port: {port}
+session_id: {ISOLATION_ID}     # only for session level, omit for request/user
+isolated_namespaces:
+  - db: {falkordb|mongodb|postgres}
+    level: {session|request|user}
+    namespace: {NAMESPACE}
+    port: {base-port}
     started: "{ISO-8601-timestamp}"
 ---
 ```
 
-If the file doesn't exist, create it with this structure.
-If it already exists, add the new entry to the `ephemeral_containers` list.
+If the file doesn't exist, create it. If it exists, merge: update `session_id` if this is a new session ID, append to `isolated_namespaces`.
+
+**Request-scoped cleanup (do immediately after the turn ends):**
+
+For FalkorDB:
+```bash
+docker exec lqc-base-falkordb redis-cli GRAPH.DELETE {NAMESPACE}
+```
+For MongoDB:
+```bash
+docker exec lqc-base-mongodb mongosh --eval "db.getSiblingDB('{NAMESPACE}').dropDatabase()" --quiet
+```
+For PostgreSQL:
+```bash
+docker exec lqc-base-postgres psql -U lqc -d lqcdata -c "DROP SCHEMA IF EXISTS {NAMESPACE} CASCADE;"
+```
+Then remove the entry from `isolated_namespaces`.
+
+**Session-scoped cleanup:** handled automatically by the SessionEnd hook.
+
+**User-scoped cleanup:** tell the user to run the drop command manually when done.
