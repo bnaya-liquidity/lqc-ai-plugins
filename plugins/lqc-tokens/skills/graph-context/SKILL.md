@@ -24,11 +24,58 @@ Use FalkorDB when your task involves entities with relationships. Instead of loa
 For isolated setup without port conflicts, use host port 16379 (avoids collision with local Redis on 6379):
 
 ```bash
-docker run -d --name falkordb -p 16379:6379 falkordb/falkordb:latest
-pip install falkordb
+docker run -d --name falkordb -p 16379:6379 \
+  --health-cmd "redis-cli -p 6379 ping" \
+  --health-interval 2s --health-retries 10 \
+  falkordb/falkordb:latest
 ```
 
 If you used `docker-advisor` to set up FalkorDB, use the port it assigned instead.
+
+## Querying — MCP path (preferred)
+
+When `mcp__falkordb__*` tools are in scope, query FalkorDB directly without spawning Python:
+
+**1. Inspect the graph schema:**
+```
+mcp__falkordb__graph_structure(graph="<graph-name>")
+```
+Returns node labels, relationship types, and property keys — use this to write queries without loading data into context first.
+
+**2. Run read-only Cypher:**
+```
+mcp__falkordb__query_graph_readonly(graph="<graph-name>", query="MATCH (s:Service {name: $name})-[:DEPENDS_ON*1..3]->(dep) RETURN DISTINCT dep.name", params={"name": "auth-service"})
+```
+
+**3. Run read-write queries (for loading/mutations):**
+```
+mcp__falkordb__query_graph(graph="<graph-name>", query="MERGE (n:Service {name: $name}) SET n.language = $lang", params={"name": "auth-service", "lang": "go"})
+```
+
+**Connection:** The MCP server reads `FALKORDB_HOST` and `FALKORDB_PORT` from its env. Set these in `.mcp.json` to match the docker-advisor-assigned port.
+
+## Querying — Python fallback (when MCP not available)
+
+```python
+from falkordb import FalkorDB
+
+db = FalkorDB(host='localhost', port=6379)  # use docker-advisor port if different
+g = db.select_graph('myproject')
+
+# Load from a list of dicts
+for row in data:
+    g.query(
+        "MERGE (n:Entity {id: $id}) SET n.name = $name, n.type = $type",
+        {'id': row['id'], 'name': row['name'], 'type': row['type']}
+    )
+
+# Load relationships
+for edge in edges:
+    g.query(
+        "MATCH (a:Entity {id: $from}), (b:Entity {id: $to}) MERGE (a)-[:RELATES_TO]->(b)",
+        {'from': edge['from'], 'to': edge['to']}
+    )
+```
 
 ## Schema design for Claude
 
@@ -69,36 +116,12 @@ MATCH p=shortestPath((a:Service {name: $from})-[*]->(b:Service {name: $to})) RET
 MATCH (s:Service)-[r:DEPENDS_ON]->() RETURN s.name, count(r) AS dep_count ORDER BY dep_count DESC
 ```
 
-## Loading data into FalkorDB
-
-```python
-from falkordb import FalkorDB
-
-db = FalkorDB(host='localhost', port=6379)
-g = db.select_graph('myproject')
-
-# Load from a list of dicts
-for row in data:
-    g.query(
-        "MERGE (n:Entity {id: $id}) SET n.name = $name, n.type = $type",
-        {'id': row['id'], 'name': row['name'], 'type': row['type']}
-    )
-
-# Load relationships
-for edge in edges:
-    g.query(
-        "MATCH (a:Entity {id: $from}), (b:Entity {id: $to}) MERGE (a)-[:RELATES_TO]->(b)",
-        {'from': edge['from'], 'to': edge['to']}
-    )
-```
-
 ## Passing query results to Claude
 
-Run the query, format results as a compact table or list, and include only that in the prompt:
+Run the query, format results as a compact table or list, include only that in the prompt:
 
 ```python
 result = g.query("MATCH (s:Service)-[:DEPENDS_ON]->(d) RETURN s.name, d.name")
-# Format as: "auth-service depends on: postgres, redis\napi-gateway depends on: auth-service"
 context = "\n".join(f"{r[0]} depends on: {r[1]}" for r in result.result_set)
 ```
 
