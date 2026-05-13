@@ -90,6 +90,81 @@
           "type": "behavior_check"
         }
       ]
+    },
+    {
+      "id": 5,
+      "name": "docker-advisor-falkordb-mcp-path",
+      "prompt": "I need to analyze a social network dataset. I have 50,000 users and 2 million friendship connections in a CSV. I need to find influencers, communities, and the shortest path between any two users. Please set up the database.",
+      "context": "mcp__falkordb__list_graphs, mcp__falkordb__query_graph_readonly, mcp__falkordb__query_graph tools are available in the tool list. Docker MCP tools are NOT available.",
+      "expected_output": "docker-advisor recommends FalkorDB, generates docker-compose.lqc.yml with healthcheck, outputs manual docker compose command (no Docker MCP), then provides MCP-based query examples using mcp__falkordb__query_graph_readonly and mcp__falkordb__query_graph with graphName parameter — NOT Python subprocess code. Also reminds user to update .mcp.json FALKORDB_PORT.",
+      "assertions": [
+        {
+          "text": "Skill recommends FalkorDB given the graph-shaped social network data",
+          "type": "content_check"
+        },
+        {
+          "text": "Generated docker-compose.lqc.yml includes a healthcheck block",
+          "type": "content_check"
+        },
+        {
+          "text": "Query examples reference mcp__falkordb__query_graph_readonly or mcp__falkordb__query_graph with graphName= parameter, NOT Python subprocess",
+          "type": "content_check"
+        },
+        {
+          "text": "Skill reminds user to update .mcp.json with the assigned FALKORDB_PORT",
+          "type": "content_check"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "docker-advisor-mongodb-mcp-path",
+      "prompt": "I have a collection of 30,000 support tickets as JSON. Each ticket has different fields depending on the product. I need to search them by keyword and count by category.",
+      "context": "mcp__mongodb__find, mcp__mongodb__count, mcp__mongodb__aggregate, mcp__mongodb__collection-schema tools are available. Docker MCP tools are NOT available.",
+      "expected_output": "docker-advisor recommends MongoDB, generates docker-compose.lqc.yml with healthcheck, provides manual docker compose command, then shows query examples using mcp__mongodb__find and mcp__mongodb__aggregate — NOT pymongo Python code. Reminds user to update .mcp.json connection string port.",
+      "assertions": [
+        {
+          "text": "Skill recommends MongoDB given the variable-schema JSON document data",
+          "type": "content_check"
+        },
+        {
+          "text": "Generated docker-compose.lqc.yml includes a healthcheck block",
+          "type": "content_check"
+        },
+        {
+          "text": "Query examples reference mcp__mongodb__find or mcp__mongodb__aggregate, NOT pymongo subprocess",
+          "type": "content_check"
+        },
+        {
+          "text": "Skill reminds user to update .mcp.json MongoDB connection string",
+          "type": "content_check"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "docker-advisor-postgres-mcp-path",
+      "prompt": "I have Q1 sales data in a CSV: 500,000 rows with date, region, product, units, revenue, cost columns. I need to GROUP BY region and product and find top 10 by margin.",
+      "context": "mcp__postgres__query tool is available. Docker MCP tools are NOT available.",
+      "expected_output": "docker-advisor recommends PostgreSQL, generates docker-compose.lqc.yml with healthcheck, provides manual docker compose command, then shows query examples using mcp__postgres__query with SQL — NOT psycopg2 Python code. Notes mcp__postgres__query is read-only (write ops need psycopg2 fallback). Reminds user to update .mcp.json Postgres connection string port.",
+      "assertions": [
+        {
+          "text": "Skill recommends PostgreSQL given the tabular CSV data with SQL-style access patterns",
+          "type": "content_check"
+        },
+        {
+          "text": "Generated docker-compose.lqc.yml includes a healthcheck block",
+          "type": "content_check"
+        },
+        {
+          "text": "Query examples reference mcp__postgres__query with SQL, NOT psycopg2 or subprocess",
+          "type": "content_check"
+        },
+        {
+          "text": "Skill notes that mcp__postgres__query is read-only and directs user to Python fallback for write operations",
+          "type": "content_check"
+        }
+      ]
     }
   ]
 }
