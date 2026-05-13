@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "skill_name": "eval + docker-advisor",
+    "skill_path": "plugins/lqc-tokens/skills",
+    "iteration": "3-pre",
+    "note": "Snapshot before MCP integration. Evals 1-4 all pass at 100% (iteration-2 confirmed). This file is the correctness+token baseline for measuring MCP improvement impact.",
+    "timestamp": "2026-05-13T00:00:00Z",
+    "evals_run": [1, 2, 3, 4],
+    "runs_per_configuration": 1
+  },
+  "baseline_scores": {
+    "eval_1_eval-report-from-realistic-log": { "pass_rate": 1.0, "tokens": 24960, "time_seconds": 51.2 },
+    "eval_2_pre-prompt-hook-large-data-paste": { "pass_rate": 1.0, "tokens": null, "time_seconds": null },
+    "eval_3_pre-prompt-hook-vague-prompt": { "pass_rate": 1.0, "tokens": null, "time_seconds": null },
+    "eval_4_pre-prompt-hook-well-formed-prompt-stays-silent": { "pass_rate": 1.0, "tokens": null, "time_seconds": null }
+  },
+  "notes": [
+    "MCP tools absent: docker-advisor falls back to Python subprocess for all DB operations.",
+    "graph-context skill uses Python falkordb client via Bash tool.",
+    "Target: MCP paths should preserve 100% pass rate and reduce token cost via direct tool calls."
+  ]
+}
