@@ -1,0 +1,11 @@
+---
+ephemeral_containers:
+  - name: lqc-abc123-falkordb
+    port: 6380
+    started: "2026-05-13T10:30:00Z"
+  - name: lqc-def456-postgres
+    port: 54001
+    started: "2026-05-13T10:30:00Z"
+---
+
+Managed by lqc-tokens plugin. Do not edit manually.
