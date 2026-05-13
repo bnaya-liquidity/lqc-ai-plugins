@@ -12,7 +12,16 @@
 **Docker image:** `falkordb/falkordb:latest`
 **Default port:** 6379 (Redis-compatible)
 **Query language:** Cypher + FalkorDB extensions
-**Client:** `pip install falkordb` or Redis client
+**Client (Python fallback):** `pip install falkordb`
+
+**MCP server:** `@falkordb/mcpserver` — detected as `mcp__falkordb__*`
+**MCP tools available:**
+- `mcp__falkordb__list_graphs` — list all graphs
+- `mcp__falkordb__graph_structure` — inspect schema (node labels, relationship types, properties)
+- `mcp__falkordb__query_graph_readonly` — run read-only OpenCypher queries
+- `mcp__falkordb__query_graph` — run read-write OpenCypher queries
+- `mcp__falkordb__create_nodes` — insert nodes
+- `mcp__falkordb__create_relationships` — insert edges
 
 ## MongoDB + Lucene
 
@@ -25,7 +34,14 @@
 **Docker image:** `mongo:7`
 **Default port:** 27017
 **Query language:** MQL (MongoDB Query Language)
-**Client:** `pip install pymongo`
+**Client (Python fallback):** `pip install pymongo`
+
+**MCP server:** `mongodb-mcp-server` — detected as `mcp__mongodb__*`
+**MCP tools available:**
+- `mcp__mongodb__find` — query documents with filter/projection/sort/limit
+- `mcp__mongodb__count` — count documents matching a filter
+- `mcp__mongodb__aggregate` — run aggregation pipelines
+- `mcp__mongodb__collection-schema` — inspect collection schema
 
 ## PostgreSQL
 
@@ -38,7 +54,11 @@
 **Docker image:** `postgres:16-alpine`
 **Default port:** 5432
 **Query language:** SQL
-**Client:** `pip install psycopg2-binary`
+**Client (Python fallback):** `pip install psycopg2-binary`
+
+**MCP server:** `@modelcontextprotocol/server-postgres` — detected as `mcp__postgres__*`
+**MCP tools available:**
+- `mcp__postgres__query` — execute read-only SQL queries and return results
 
 ## Chroma (Vector / Semantic)
 
@@ -51,6 +71,8 @@
 **Docker image:** `chromadb/chroma:latest`
 **Default port:** 8000
 **Client:** `pip install chromadb`
+
+*(No MCP server available for Chroma yet — use Python client via Bash.)*
 
 ## Combination patterns
 
