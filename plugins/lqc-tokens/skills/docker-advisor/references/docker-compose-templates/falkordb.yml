@@ -7,6 +7,11 @@ services:
     volumes:
       - VOLUME_NAME:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
 
 volumes:
   VOLUME_NAME:
