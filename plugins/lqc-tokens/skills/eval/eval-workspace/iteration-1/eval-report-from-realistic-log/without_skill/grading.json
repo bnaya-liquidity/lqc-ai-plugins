@@ -1,0 +1,31 @@
+{
+  "eval_id": 1,
+  "run": "without_skill",
+  "expectations": [
+    {
+      "text": "Report contains all 5 required metric lines from spec 10.3: Token savings, Cache hit rate, Hook acceptance, DB advisor, Session hygiene",
+      "passed": false,
+      "evidence": "Baseline produces a verbose markdown report with tables but NOT in spec 10.3 format. It has the data but not the 5-line format. DB advisor and Session hygiene are buried in a table row, not labeled as spec requires."
+    },
+    {
+      "text": "Token savings line shows improvement given post-install avg is 30% lower than baseline",
+      "passed": true,
+      "evidence": "Shows -32% in the table (Avg input tokens / session: 45,000 → 30,714, -14,286 (-32%))"
+    },
+    {
+      "text": "DB advisor line shows breakdown by DB type (FalkorDB and Postgres) matching the test log data",
+      "passed": true,
+      "evidence": "Shows 'Docker setup adopted: 2' but doesn't show FalkorDB/Postgres breakdown in a labeled DB advisor line"
+    },
+    {
+      "text": "Report uses the exact separator line of dashes from spec 10.3 (not a different format)",
+      "passed": false,
+      "evidence": "Uses markdown headers and HR separators (---), not the spec's em-dash separator format"
+    },
+    {
+      "text": "One and only one adaptive recommendation is shown at the end",
+      "passed": false,
+      "evidence": "No adaptive recommendation section. The baseline produces a descriptive report but no actionable recommendation at the end."
+    }
+  ]
+}

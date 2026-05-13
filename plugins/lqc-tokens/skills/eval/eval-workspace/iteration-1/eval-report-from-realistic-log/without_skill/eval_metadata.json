@@ -1,0 +1,1 @@
+{"eval_id": 1, "eval_name": "eval-report-from-realistic-log-baseline", "prompt": "Generate a token savings report from the usage log and baseline without a structured skill", "assertions": []}

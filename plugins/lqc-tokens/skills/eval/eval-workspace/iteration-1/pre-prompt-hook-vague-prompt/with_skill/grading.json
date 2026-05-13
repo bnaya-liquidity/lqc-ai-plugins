@@ -1,0 +1,21 @@
+{
+  "eval_id": 3,
+  "run": "with_skill",
+  "expectations": [
+    {
+      "text": "Advisory block fires for the vague 'fix this' prompt",
+      "passed": true,
+      "evidence": "hook_output.md contains '⚡ lqc-tokens advisory' header with vague-prompt advisory"
+    },
+    {
+      "text": "Advisory identifies vague intent as the anti-pattern (not data-heaviness or token count)",
+      "passed": true,
+      "evidence": "'• Vague prompt detected (\"fix this\" with no specific intent)' — correctly identified as Check 2 anti-pattern, not Check 1 or 3"
+    },
+    {
+      "text": "Advisory suggests optimize-prompt skill or asks for clarification",
+      "passed": true,
+      "evidence": "Advisory: '— /lqc-tokens:optimize-prompt can help clarify your request'"
+    }
+  ]
+}

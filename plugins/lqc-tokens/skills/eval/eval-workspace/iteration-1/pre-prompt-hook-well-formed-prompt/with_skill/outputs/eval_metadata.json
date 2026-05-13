@@ -1,0 +1,1 @@
+{"eval_id": 4, "eval_name": "pre-prompt-hook-well-formed-prompt", "prompt": "In src/api/users.ts, getUser at line 47 throws TypeError...", "assertions": []}

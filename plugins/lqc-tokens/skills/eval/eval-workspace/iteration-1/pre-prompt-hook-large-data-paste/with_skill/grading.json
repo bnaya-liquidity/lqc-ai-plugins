@@ -1,0 +1,26 @@
+{
+  "eval_id": 2,
+  "run": "with_skill",
+  "expectations": [
+    {
+      "text": "Advisory block is present (hook fired) — output contains the '⚡ lqc-tokens advisory' header",
+      "passed": true,
+      "evidence": "hook_output.md contains '⚡ lqc-tokens advisory' header"
+    },
+    {
+      "text": "Advisory mentions docker-advisor as a suggested mitigation for the data task",
+      "passed": true,
+      "evidence": "Advisory line: '• Data-heavy task detected — /lqc-tokens:docker-advisor can offload this data to a DB'"
+    },
+    {
+      "text": "Advisory flags this as a data-heavy task (CSV, bulk data, or similar language)",
+      "passed": true,
+      "evidence": "Both '• Large paste detected' and '• Data-heavy task detected' are present — correctly identifies both the anti-pattern (paste) and the data task"
+    },
+    {
+      "text": "Claude still responds to the actual question (hook does not block the prompt)",
+      "passed": true,
+      "evidence": "claude_response.md was generated with actual analysis content after the advisory"
+    }
+  ]
+}

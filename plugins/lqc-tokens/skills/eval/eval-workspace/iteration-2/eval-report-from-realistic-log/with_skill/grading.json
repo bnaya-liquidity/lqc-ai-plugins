@@ -1,0 +1,31 @@
+{
+  "eval_id": 1,
+  "run": "with_skill",
+  "expectations": [
+    {
+      "text": "Report contains all 5 required metric lines from spec 10.3",
+      "passed": true,
+      "evidence": "All 5 lines present: Token savings (-31.7%), Cache hit rate (+11.4pp), Hook acceptance (82%), DB advisor (2 sessions, 1 FalkorDB 1 Postgres), Session hygiene (1 new session)"
+    },
+    {
+      "text": "Token savings line shows improvement (plugin reduced tokens vs baseline)",
+      "passed": true,
+      "evidence": "Shows -31.7% (negative sign = reduction from baseline = improvement). Sign convention changed from iter-1 (+31.7%) to iter-2 (-31.7%) — both correct, new version more intuitive."
+    },
+    {
+      "text": "DB advisor line shows FalkorDB and Postgres breakdown",
+      "passed": true,
+      "evidence": "'2 sessions used Docker strategy (1 FalkorDB, 1 Postgres)'"
+    },
+    {
+      "text": "Report uses spec 10.3 em-dash separator format",
+      "passed": true,
+      "evidence": "Em-dash separator present"
+    },
+    {
+      "text": "Recommendation correctly identifies improving cache (delta=+11.4pp) and does NOT fire the stagnant-cache false alarm",
+      "passed": true,
+      "evidence": "'Cache hit rate improving (+11.4pp) but still below 85% target — keep going' — correctly uses condition 5 (improving) not condition 4 (stagnant). This is the key fix from iteration 1."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "overall": {
+    "input_tokens": {
+      "total": 315000
+    },
+    "session_count": 7,
+    "cache_hit_rate": 0.61
+  },
+  "captured_at": "2026-04-29T10:00:00Z"
+}

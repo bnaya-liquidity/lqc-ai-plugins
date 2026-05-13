@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "description": "Token cost optimizer: pre-prompt advisory, Docker DB advisor, GraphRAG context, session reporting.",
   "author": {
-    "name": "Liquidity",
+    "name": "Liquidity.com",
     "email": "bnaya@liquidity.com"
-  }
+  },
+  "license": "MIT"
 }

@@ -23,7 +23,7 @@ services:
     environment:
       POSTGRES_DB: lqcdata
       POSTGRES_USER: lqc
-      POSTGRES_PASSWORD: lqcpass
+      POSTGRES_PASSWORD: ${LQC_DB_PASSWORD}
 
 volumes:
   lqc-a1b2c3d4-data:
@@ -36,7 +36,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 df = pd.read_csv('sales.csv')
-engine = create_engine('postgresql://lqc:lqcpass@localhost:47832/lqcdata')
+engine = create_engine(f'postgresql://lqc:{os.environ["LQC_DB_PASSWORD"]}@localhost:47832/lqcdata')
 df.to_sql('sales', engine, if_exists='replace', index=False)
 print(f"Loaded {len(df)} rows")
 ```

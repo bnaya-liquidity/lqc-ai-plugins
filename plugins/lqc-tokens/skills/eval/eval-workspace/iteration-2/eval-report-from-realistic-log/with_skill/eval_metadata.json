@@ -1,0 +1,1 @@
+{"eval_id": 1, "eval_name": "eval-report-from-realistic-log", "prompt": "Run /lqc-tokens:eval — testing improved recommendation logic with cache delta awareness", "assertions": []}

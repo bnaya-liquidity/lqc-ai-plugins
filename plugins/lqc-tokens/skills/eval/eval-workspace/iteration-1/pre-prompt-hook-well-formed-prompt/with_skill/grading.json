@@ -1,0 +1,16 @@
+{
+  "eval_id": 4,
+  "run": "with_skill",
+  "expectations": [
+    {
+      "text": "No advisory block appears — the hook correctly identifies this as a clean, specific prompt and stays silent",
+      "passed": true,
+      "evidence": "hook_output.md is empty (1 line, blank). The hook correctly ran all 4 checks and produced no output."
+    },
+    {
+      "text": "Claude proceeds directly to addressing the null guard fix without any lqc-tokens advisory preamble",
+      "passed": true,
+      "evidence": "claude_response.md contains TypeScript null guard implementation with no advisory preamble"
+    }
+  ]
+}

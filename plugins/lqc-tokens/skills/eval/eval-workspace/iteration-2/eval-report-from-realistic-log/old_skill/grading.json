@@ -1,0 +1,31 @@
+{
+  "eval_id": 1,
+  "run": "old_skill",
+  "expectations": [
+    {
+      "text": "Report contains all 5 required metric lines from spec 10.3",
+      "passed": true,
+      "evidence": "All 5 lines present"
+    },
+    {
+      "text": "Token savings line shows improvement",
+      "passed": true,
+      "evidence": "Shows +31.7%"
+    },
+    {
+      "text": "DB advisor line shows FalkorDB and Postgres breakdown",
+      "passed": true,
+      "evidence": "'2 sessions used Docker strategy (FalkorDB: 1, Postgres: 1)'"
+    },
+    {
+      "text": "Report uses spec 10.3 em-dash separator format",
+      "passed": true,
+      "evidence": "Em-dash separator present"
+    },
+    {
+      "text": "Recommendation correctly identifies improving cache (delta=+11.4pp) and does NOT fire the stagnant-cache false alarm",
+      "passed": false,
+      "evidence": "'Cache hit rate below target — more consistent prompt framing will improve this'. Old skill fires this even though cache improved +11.4pp — this is a false alarm that erodes user trust."
+    }
+  ]
+}

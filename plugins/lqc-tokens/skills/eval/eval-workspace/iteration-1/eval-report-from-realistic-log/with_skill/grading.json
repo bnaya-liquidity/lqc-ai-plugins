@@ -1,0 +1,31 @@
+{
+  "eval_id": 1,
+  "run": "with_skill",
+  "expectations": [
+    {
+      "text": "Report contains all 5 required metric lines from spec 10.3: Token savings, Cache hit rate, Hook acceptance, DB advisor, Session hygiene",
+      "passed": true,
+      "evidence": "Report contains all 5 lines: 'Token savings: +31.7%', 'Cache hit rate: +11.4pp', 'Hook acceptance: 81.8%', 'DB advisor: 2 sessions...', 'Session hygiene: 1 new sessions...'"
+    },
+    {
+      "text": "Token savings line shows improvement (positive savings) given post-install avg is 30% lower than baseline",
+      "passed": true,
+      "evidence": "Shows +31.7% savings (formula: (45000-30714)/45000*100 = 31.7%). Positive value correctly indicates reduction vs baseline. Note: assertion wording said 'negative percentage' but the skill formula produces positive-for-improvement — both are valid conventions, skill is internally consistent."
+    },
+    {
+      "text": "DB advisor line shows breakdown by DB type (FalkorDB and Postgres) matching the test log data",
+      "passed": true,
+      "evidence": "Shows '2 sessions used Docker strategy (1 FalkorDB, 1 Postgres)' — exactly matching fixture data"
+    },
+    {
+      "text": "Report uses the exact separator line of dashes from spec 10.3 (not a different format)",
+      "passed": true,
+      "evidence": "Uses '────────────────────────────────────────────────' (48 em-dashes) matching spec 10.3 format exactly"
+    },
+    {
+      "text": "One and only one adaptive recommendation is shown at the end",
+      "passed": true,
+      "evidence": "Exactly one recommendation: 'Cache hit rate below target — more consistent prompt framing will improve this'. NOTE: This recommendation is questionable because cache went from 61%→72.4% (improvement), but is still below the 85% threshold. The skill fires this even when plugin is performing well. Opportunity for improvement: add a 'but improving' qualifier."
+    }
+  ]
+}

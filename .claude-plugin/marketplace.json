@@ -1,0 +1,23 @@
+{
+  "$schema": "https://claude.ai/schemas/marketplace.json",
+  "name": "lqc-ai-plugins",
+  "description": "Liquidity.com Claude Code plugins for token cost optimization and context management",
+  "owner": {
+    "name": "Liquidity.com",
+    "email": "bnaya@liquidity.com"
+  },
+  "plugins": [
+    {
+      "name": "lqc-tokens",
+      "description": "Token cost optimizer: pre-prompt advisory, Docker DB advisor, GraphRAG context, session reporting. Reduces token costs while maintaining or improving accuracy through smart context management and prompt optimization.",
+      "author": {
+        "name": "Liquidity.com",
+        "email": "bnaya@liquidity.com"
+      },
+      "category": "development",
+      "license": "MIT",
+      "source": "./plugins/lqc-tokens",
+      "homepage": "https://github.com/liquidity-com/lqc-ai-plugins/tree/main/plugins/lqc-tokens"
+    }
+  ]
+}

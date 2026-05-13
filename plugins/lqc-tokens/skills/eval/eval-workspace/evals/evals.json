@@ -1,0 +1,95 @@
+{
+  "skill_name": "eval",
+  "description": "Tests whether the eval skill (1) matches spec section 10.3 format and (2) the pre-prompt hook correctly identifies token-wasting prompts",
+  "evals": [
+    {
+      "id": 1,
+      "name": "eval-report-from-realistic-log",
+      "prompt": "Run /lqc-tokens:eval and show me my token savings report. I've been using the plugin for about 2 weeks.",
+      "context": "A ~/.claude/lqc-tokens-baseline.json and ~/.claude/lqc-tokens-log.jsonl will be pre-created in the test environment with realistic data: 14 sessions, ~30% token reduction, 2 docker adoptions (1 FalkorDB, 1 Postgres), 1 hygiene session reset, 72% hook acceptance.",
+      "expected_output": "Report in spec 10.3 format with all 5 metric lines (Token savings, Cache hit rate, Hook acceptance, DB advisor, Session hygiene) plus one adaptive recommendation.",
+      "assertions": [
+        {
+          "text": "Report contains all 5 required metric lines from spec 10.3: Token savings, Cache hit rate, Hook acceptance, DB advisor, Session hygiene",
+          "type": "content_check"
+        },
+        {
+          "text": "Token savings line shows a negative percentage (improvement) given the test data where post-install avg is 30% lower",
+          "type": "calculation_check"
+        },
+        {
+          "text": "DB advisor line shows breakdown by DB type (FalkorDB and Postgres) matching the test log data",
+          "type": "content_check"
+        },
+        {
+          "text": "Report uses the exact separator line of dashes from spec 10.3 (not a different format)",
+          "type": "format_check"
+        },
+        {
+          "text": "One and only one adaptive recommendation is shown at the end",
+          "type": "content_check"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "pre-prompt-hook-large-data-paste",
+      "prompt": "I have this sales data for Q4 and need you to analyze it:\n\ndate,region,product,units,revenue,cost\n2024-10-01,EMEA,Widget-A,142,28400,18460\n2024-10-01,EMEA,Widget-B,87,26100,14790\n2024-10-01,APAC,Widget-A,203,40600,26390\n2024-10-02,EMEA,Widget-A,118,23600,15340\n2024-10-02,APAC,Widget-B,165,49500,28050\n2024-10-03,AMER,Widget-A,310,62000,40300\n2024-10-03,AMER,Widget-B,198,59400,33660\n2024-10-04,EMEA,Widget-A,156,31200,20280\n2024-10-04,APAC,Widget-C,89,35600,24040\n2024-10-05,AMER,Widget-C,267,106800,72090\n[... 49,990 more rows like this]\n\nCan you calculate total revenue by region and find the top 5 products by profit margin?",
+      "expected_output": "Pre-prompt hook fires and produces an advisory block that: (1) flags HIGH or MEDIUM token cost, (2) detects the data-task pattern (large CSV in context), (3) suggests docker-advisor as a mitigation, (4) does NOT block the prompt (informational only).",
+      "assertions": [
+        {
+          "text": "Advisory block is present (hook fired) — output contains the '⚡ lqc-tokens advisory' header",
+          "type": "content_check"
+        },
+        {
+          "text": "Advisory mentions docker-advisor as a suggested mitigation for the data task",
+          "type": "content_check"
+        },
+        {
+          "text": "Advisory flags this as a data-heavy task (CSV, bulk data, or similar language)",
+          "type": "content_check"
+        },
+        {
+          "text": "Claude still responds to the actual question (hook does not block the prompt)",
+          "type": "behavior_check"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "pre-prompt-hook-vague-prompt",
+      "prompt": "fix this",
+      "expected_output": "Pre-prompt hook detects vague intent ('fix this' with no specific context) and fires an advisory suggesting the user clarify what to fix. The hook should identify this as a low-information prompt that will likely require multiple expensive follow-up turns to resolve.",
+      "assertions": [
+        {
+          "text": "Advisory block fires for the vague 'fix this' prompt",
+          "type": "content_check"
+        },
+        {
+          "text": "Advisory identifies vague intent as the anti-pattern (not data-heaviness or token count)",
+          "type": "content_check"
+        },
+        {
+          "text": "Advisory suggests optimize-prompt skill or asks for clarification",
+          "type": "content_check"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "pre-prompt-hook-well-formed-prompt-stays-silent",
+      "prompt": "In src/api/users.ts, the getUser function at line 47 throws a TypeError when userId is null. Add a null guard before the database lookup and return a 404 response. The function signature should stay the same.",
+      "expected_output": "Pre-prompt hook stays SILENT — this is a well-formed, specific prompt with clear intent and no large data paste. The hook should NOT fire (no advisory output) because the prompt is LOW cost and has no anti-patterns.",
+      "assertions": [
+        {
+          "text": "No advisory block appears — the hook correctly identifies this as a clean, specific prompt and stays silent",
+          "type": "absence_check"
+        },
+        {
+          "text": "Claude proceeds directly to addressing the null guard fix without any lqc-tokens advisory preamble",
+          "type": "behavior_check"
+        }
+      ]
+    }
+  ]
+}
