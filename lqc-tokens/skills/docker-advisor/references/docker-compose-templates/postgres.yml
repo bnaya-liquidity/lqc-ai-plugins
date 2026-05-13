@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: CONTAINER_NAME
+    ports:
+      - "HOST_PORT:5432"
+    volumes:
+      - VOLUME_NAME:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: lqcdata
+      POSTGRES_USER: lqc
+      POSTGRES_PASSWORD: lqcpass
+    restart: unless-stopped
+
+volumes:
+  VOLUME_NAME:

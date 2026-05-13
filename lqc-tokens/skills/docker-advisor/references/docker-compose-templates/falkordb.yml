@@ -1,0 +1,12 @@
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    container_name: CONTAINER_NAME
+    ports:
+      - "HOST_PORT:6379"
+    volumes:
+      - VOLUME_NAME:/data
+    restart: unless-stopped
+
+volumes:
+  VOLUME_NAME:

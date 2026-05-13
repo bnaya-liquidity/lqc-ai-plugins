@@ -1,0 +1,15 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: CONTAINER_NAME
+    ports:
+      - "HOST_PORT:27017"
+    volumes:
+      - VOLUME_NAME:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: lqc
+      MONGO_INITDB_ROOT_PASSWORD: lqcpass
+    restart: unless-stopped
+
+volumes:
+  VOLUME_NAME:

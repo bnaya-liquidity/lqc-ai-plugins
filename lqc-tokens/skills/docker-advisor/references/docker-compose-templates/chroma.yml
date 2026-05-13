@@ -1,0 +1,12 @@
+services:
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: CONTAINER_NAME
+    ports:
+      - "HOST_PORT:8000"
+    volumes:
+      - VOLUME_NAME:/chroma/chroma
+    restart: unless-stopped
+
+volumes:
+  VOLUME_NAME:
