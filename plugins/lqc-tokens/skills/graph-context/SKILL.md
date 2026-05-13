@@ -36,31 +36,39 @@ If you used `docker-advisor` to set up FalkorDB, use the port it assigned instea
 
 When `mcp__falkordb__*` tools are in scope, query FalkorDB directly without spawning Python:
 
-**1. Inspect the graph schema:**
+**1. Discover available graphs:**
 ```
-mcp__falkordb__graph_structure(graph="<graph-name>")
-```
-Returns node labels, relationship types, and property keys — use this to write queries without loading data into context first.
-
-**2. Run read-only Cypher:**
-```
-mcp__falkordb__query_graph_readonly(graph="<graph-name>", query="MATCH (s:Service {name: $name})-[:DEPENDS_ON*1..3]->(dep) RETURN DISTINCT dep.name", params={"name": "auth-service"})
+mcp__falkordb__list_graphs
 ```
 
-**3. Run read-write queries (for loading/mutations):**
+**2. Inspect schema via Cypher:**
 ```
-mcp__falkordb__query_graph(graph="<graph-name>", query="MERGE (n:Service {name: $name}) SET n.language = $lang", params={"name": "auth-service", "lang": "go"})
+mcp__falkordb__query_graph_readonly(graphName="<graph-name>", query="CALL db.labels() YIELD label RETURN label")
+mcp__falkordb__query_graph_readonly(graphName="<graph-name>", query="CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType")
 ```
 
-**Connection:** The MCP server reads `FALKORDB_HOST` and `FALKORDB_PORT` from its env. Set these in `.mcp.json` to match the docker-advisor-assigned port.
+**3. Run read-only queries:**
+```
+mcp__falkordb__query_graph_readonly(graphName="<graph-name>", query="MATCH (s:Service {name: 'auth-service'})-[:DEPENDS_ON*1..3]->(dep) RETURN DISTINCT dep.name")
+```
+
+**4. Load data / write (create nodes and relationships via Cypher):**
+```
+mcp__falkordb__query_graph(graphName="<graph-name>", query="MERGE (n:Service {name: 'auth-service'}) SET n.language = 'go', n.team = 'platform'")
+mcp__falkordb__query_graph(graphName="<graph-name>", query="MATCH (a:Service {name: 'auth-service'}), (b:Service {name: 'postgres'}) MERGE (a)-[:DEPENDS_ON]->(b)")
+```
+
+Embed values directly in the query string — the tool does not accept a separate `params` argument.
+
+**Connection:** The MCP server reads `FALKORDB_HOST` and `FALKORDB_PORT` from its env. Copy `.mcp.json.example` → `.mcp.json` and set `FALKORDB_PORT` to the port assigned by docker-advisor.
 
 ## Querying — Python fallback (when MCP not available)
 
 ```python
 from falkordb import FalkorDB
 
-db = FalkorDB(host='localhost', port=6379)  # use docker-advisor port if different
-g = db.select_graph('myproject')
+db = FalkorDB(host='localhost', port=6379)  # replace HOST_PORT with assigned port, e.g. 54001
+g = db.select_graph('<graph-name>')
 
 # Load from a list of dicts
 for row in data:

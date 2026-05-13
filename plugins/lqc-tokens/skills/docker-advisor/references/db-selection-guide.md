@@ -16,12 +16,10 @@
 
 **MCP server:** `@falkordb/mcpserver` — detected as `mcp__falkordb__*`
 **MCP tools available:**
-- `mcp__falkordb__list_graphs` — list all graphs
-- `mcp__falkordb__graph_structure` — inspect schema (node labels, relationship types, properties)
-- `mcp__falkordb__query_graph_readonly` — run read-only OpenCypher queries
-- `mcp__falkordb__query_graph` — run read-write OpenCypher queries
-- `mcp__falkordb__create_nodes` — insert nodes
-- `mcp__falkordb__create_relationships` — insert edges
+- `mcp__falkordb__list_graphs` — list all graph names in this FalkorDB instance
+- `mcp__falkordb__query_graph_readonly` — run read-only OpenCypher queries (`graphName`, `query`)
+- `mcp__falkordb__query_graph` — run read/write OpenCypher queries (`graphName`, `query`); use Cypher CREATE/MERGE for inserts
+- `mcp__falkordb__delete_graph` — delete a graph (`graphName`, `confirmDelete: true`)
 
 ## MongoDB + Lucene
 
@@ -59,6 +57,8 @@
 **MCP server:** `@modelcontextprotocol/server-postgres` — detected as `mcp__postgres__*`
 **MCP tools available:**
 - `mcp__postgres__query` — execute read-only SQL queries and return results
+
+Note: `mcp__postgres__query` is **read-only**. For `CREATE TABLE`, `INSERT`, or `COPY` operations, use the Python psycopg2 fallback.
 
 ## Chroma (Vector / Semantic)
 

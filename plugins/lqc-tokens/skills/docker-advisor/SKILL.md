@@ -68,28 +68,28 @@ Once the container is healthy, check whether a DB-native MCP server is available
 
 **If `mcp__falkordb__*` tools are available:**
 
-Inspect graph structure with:
+Discover graphs and inspect schema:
 ```
-mcp__falkordb__list_graphs → to see existing graphs
-mcp__falkordb__graph_structure(graph="<graph-name>") → to inspect schema
+mcp__falkordb__list_graphs
+mcp__falkordb__query_graph_readonly(graphName="<graph-name>", query="CALL db.labels() YIELD label RETURN label")
 ```
 
 Run read-only Cypher:
 ```
-mcp__falkordb__query_graph_readonly(graph="<graph-name>", query="MATCH (n) RETURN n.name LIMIT 10")
+mcp__falkordb__query_graph_readonly(graphName="<graph-name>", query="MATCH (n) RETURN n.name LIMIT 10")
 ```
 
-Insert nodes/edges:
+Load data (create nodes and relationships via Cypher):
 ```
-mcp__falkordb__create_nodes(graph="<graph-name>", labels=["Entity"], properties=[{"id": "1", "name": "..."}])
-mcp__falkordb__create_relationships(graph="<graph-name>", type="RELATES_TO", src_node={...}, dest_node={...})
+mcp__falkordb__query_graph(graphName="<graph-name>", query="MERGE (n:Entity {id: '1', name: 'example'})")
+mcp__falkordb__query_graph(graphName="<graph-name>", query="MATCH (a:Entity {id: '1'}), (b:Entity {id: '2'}) MERGE (a)-[:RELATES_TO]->(b)")
 ```
 
 **Fallback (no FalkorDB MCP):** Use Python client:
 ```python
 from falkordb import FalkorDB
-db = FalkorDB(host='localhost', port=HOST_PORT)
-g = db.select_graph('myproject')
+db = FalkorDB(host='localhost', port=HOST_PORT)  # replace HOST_PORT with assigned port, e.g. 54001
+g = db.select_graph('<graph-name>')
 result = g.query("MATCH (n:Entity) RETURN n.name LIMIT 10")
 ```
 
@@ -114,7 +114,7 @@ mcp__mongodb__aggregate(collection="<collection>", pipeline=[{"$group": {"_id": 
 **Fallback (no MongoDB MCP):**
 ```python
 from pymongo import MongoClient
-client = MongoClient('mongodb://lqc:lqcpass@localhost:HOST_PORT/')
+client = MongoClient('mongodb://lqc:lqcpass@localhost:HOST_PORT/')  # replace HOST_PORT with assigned port
 db = client['lqcdata']
 ```
 
@@ -130,10 +130,12 @@ mcp__postgres__query(sql="SELECT * FROM my_table LIMIT 10")
 mcp__postgres__query(sql="SELECT column_name, data_type FROM information_schema.columns WHERE table_name='my_table'")
 ```
 
+Note: `mcp__postgres__query` is **read-only**. For `CREATE TABLE`, `INSERT`, or `COPY` operations, use the Python psycopg2 fallback.
+
 **Fallback (no Postgres MCP):**
 ```python
 import psycopg2
-conn = psycopg2.connect(host='localhost', port=HOST_PORT, dbname='lqcdata', user='lqc', password='lqcpass')
+conn = psycopg2.connect(host='localhost', port=HOST_PORT, dbname='lqcdata', user='lqc', password='lqcpass')  # replace HOST_PORT with assigned port
 ```
 
 **Also remind user:** copy `.mcp.json.example` → `.mcp.json` and update the connection string port.
