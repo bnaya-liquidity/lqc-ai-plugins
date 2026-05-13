@@ -182,7 +182,7 @@
           "type": "content_check"
         },
         {
-          "text": "Skill creates a Postgres schema named lqc_sess_{id} (not a new database or new container)",
+          "text": "Skill creates a Postgres schema with name matching the pattern lqc_sess_* (e.g. lqc_sess_a1b2c3d4) via CREATE SCHEMA or docker exec psql — not a new container or database",
           "type": "content_check"
         },
         {
@@ -191,6 +191,10 @@
         },
         {
           "text": "Old 'Is this data needed after today?' question does NOT appear",
+          "type": "absence_check"
+        },
+        {
+          "text": "Output does NOT contain a random UUID container name (pattern: lqc-[a-f0-9]{8}) or random high port (40000-49999)",
           "type": "absence_check"
         }
       ]

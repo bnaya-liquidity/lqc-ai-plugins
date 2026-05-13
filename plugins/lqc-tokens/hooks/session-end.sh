@@ -24,10 +24,11 @@ pre, fm_text, close, rest = match.groups()
 
 try:
     import yaml
-    fm = yaml.safe_load(fm_text) or {}
 except ImportError:
-    sys.exit(0)
+    print('lqc-tokens: PyYAML not available — namespace cleanup skipped. Install pyyaml to enable.')
+    sys.exit(1)
 
+fm = yaml.safe_load(fm_text) or {}
 namespaces = fm.get('isolated_namespaces', [])
 remaining = []
 
@@ -41,6 +42,14 @@ for ns in namespaces:
         continue
 
     if db == 'falkordb':
+        # Check existence first — GRAPH.DELETE on a non-existent graph returns an error
+        check = subprocess.run(
+            ['docker', 'exec', 'lqc-base-falkordb', 'redis-cli', 'GRAPH.LIST'],
+            capture_output=True, text=True
+        )
+        if namespace not in check.stdout:
+            print(f'lqc-tokens: {db} namespace {namespace} already gone, skipping')
+            continue  # already dropped — don't add to remaining
         cmd = ['docker', 'exec', 'lqc-base-falkordb', 'redis-cli', 'GRAPH.DELETE', namespace]
     elif db == 'mongodb':
         cmd = ['docker', 'exec', 'lqc-base-mongodb', 'mongosh',
@@ -53,15 +62,22 @@ for ns in namespaces:
         remaining.append(ns)
         continue
 
-    result = subprocess.run(cmd, capture_output=True)
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    stderr = result.stderr.strip()
+    container_gone = 'No such container' in stderr or 'Error response from daemon' in stderr
+
     if result.returncode == 0:
         print(f'lqc-tokens: dropped {db} namespace {namespace}')
+        # success — don't add to remaining
+    elif container_gone:
+        print(f'lqc-tokens: base container not running, skipping {namespace}')
+        # container stopped — namespace is inaccessible anyway, remove from tracking
     else:
-        # container may be stopped already — not an error
-        print(f'lqc-tokens: could not drop {namespace} (container may be stopped): {result.stderr.decode().strip()}')
+        print(f'lqc-tokens: WARNING: failed to drop {namespace}: {stderr}')
+        remaining.append(ns)  # keep in tracking for next session-end attempt
 
-# Rewrite file: clear session_id, keep only non-session namespaces
-fm['session_id'] = None
+# Rewrite file: clear session_id, keep only non-session namespaces (+ any failed drops)
+fm.pop('session_id', None)
 fm['isolated_namespaces'] = remaining
 new_fm = yaml.dump(fm, default_flow_style=False, sort_keys=False)
 with open(path, 'w') as f:
