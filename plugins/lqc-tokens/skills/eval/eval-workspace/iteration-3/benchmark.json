@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "skill_name": "docker-advisor",
+    "skill_path": "plugins/lqc-tokens/skills/docker-advisor",
+    "executor_model": "claude-sonnet-4-6",
+    "analyzer_model": "claude-sonnet-4-6",
+    "timestamp": "FILL_IN_WHEN_RUN",
+    "iteration": 3,
+    "evals_run": [5, 6, 7],
+    "note": "Tests MCP detection paths for FalkorDB, MongoDB, Postgres. Evals 1-4 inherited from iteration-2 at 100%. Run /lqc-tokens:eval to populate this file."
+  },
+  "inherited_from_iteration_2": {
+    "eval_1_eval-report-from-realistic-log": { "pass_rate": 1.0, "tokens": 24960, "time_seconds": 51.2 },
+    "eval_2_pre-prompt-hook-large-data-paste": { "pass_rate": 1.0 },
+    "eval_3_pre-prompt-hook-vague-prompt": { "pass_rate": 1.0 },
+    "eval_4_pre-prompt-hook-well-formed-prompt-stays-silent": { "pass_rate": 1.0 }
+  },
+  "runs": [],
+  "run_summary": {},
+  "delta_from_pre_baseline": {
+    "note": "Populate by running evals 5-7 with /skill-creator:skill-creator and comparing to benchmark-pre.json. Key metric: token cost of MCP path vs Python path (1 tool call vs 3+ tool calls per query)."
+  }
+}
