@@ -4,6 +4,38 @@
       "command": "docker",
       "args": ["mcp", "gateway", "run"],
       "type": "stdio"
+    },
+    "falkordb": {
+      "command": "npx",
+      "args": ["-y", "@falkordb/mcpserver@latest"],
+      "type": "stdio",
+      "env": {
+        "FALKORDB_HOST": "localhost",
+        "FALKORDB_PORT": "6379",
+        "FALKORDB_USERNAME": "",
+        "FALKORDB_PASSWORD": "",
+        "FALKORDB_DEFAULT_READONLY": "true"
+      }
+    },
+    "mongodb": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mongodb-mcp-server",
+        "--connectionString",
+        "mongodb://lqc:lqcpass@localhost:27017/lqcdata",
+        "--readOnly"
+      ],
+      "type": "stdio"
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://lqc:lqcpass@localhost:5432/lqcdata"
+      ],
+      "type": "stdio"
     }
   }
 }
