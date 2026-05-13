@@ -55,7 +55,33 @@ if os.path.exists(p):
 print('sess_' + uuid.uuid4().hex[:8])
 EOF
 ```
-If this prints a new ID (not found in the file), write it to `~/.claude/lqc-tokens.local.md` under `session_id`.
+If this prints a new ID (not found in the file), save it with:
+```bash
+python3 - "$ISOLATION_ID" <<'EOF'
+import sys, re, os
+new_id = sys.argv[1]
+p = os.path.expanduser('~/.claude/lqc-tokens.local.md')
+if os.path.exists(p):
+    with open(p) as f:
+        raw = f.read()
+    m = re.match(r'^(---\n)(.*?)(---\n?)(.*)', raw, re.DOTALL)
+    if m:
+        pre, fm_text, close, rest = m.groups()
+        try:
+            import yaml
+            fm = yaml.safe_load(fm_text) or {}
+            fm['session_id'] = new_id
+            new_fm = yaml.dump(fm, default_flow_style=False, sort_keys=False)
+            with open(p, 'w') as f:
+                f.write(pre + new_fm + close + rest)
+            sys.exit(0)
+        except ImportError:
+            pass
+# File absent or no frontmatter — create minimal file
+with open(p, 'w') as f:
+    f.write(f'---\nsession_id: {new_id}\nisolated_namespaces: []\nephemeral_containers: []\n---\n\nManaged by lqc-tokens plugin. Do not edit manually.\n')
+EOF
+```
 
 **request:**
 ```bash
@@ -76,7 +102,7 @@ Set `NAMESPACE=lqc_{ISOLATION_ID}` (e.g. `lqc_sess_a1b2c3d4`).
 docker ps --filter "name=lqc-base-{db}" --format "{{.Names}}"
 ```
 
-**If NOT running**, write `docker-compose.lqc-base.yml` to the project root with the fixed base container config from `references/isolation-patterns.md`. Use these exact values:
+**Write `docker-compose.lqc-base.yml`** to the project root (always — content is deterministic and idempotent):
 
 For FalkorDB:
 ```yaml
@@ -145,17 +171,11 @@ volumes:
   lqc-base-postgres-data:
 ```
 
-**Start the base container (if not already running):**
-
-If `mcp__docker__*` tools are available:
-```
-docker compose -f docker-compose.lqc-base.yml up -d --wait
-```
-
-Otherwise output the manual command and ask user to run it:
+**If NOT running**, start the base container:
 ```bash
 docker compose -f docker-compose.lqc-base.yml up -d --wait
 ```
+If Docker MCP is not available, output this command for the user to run manually.
 
 **Create the namespace** (skip for FalkorDB and MongoDB — created implicitly on first write):
 
@@ -178,18 +198,18 @@ Once the container is healthy, check whether a DB-native MCP server is available
 Discover graphs and inspect schema:
 ```
 mcp__falkordb__list_graphs
-mcp__falkordb__query_graph_readonly(graphName="<graph-name>", query="CALL db.labels() YIELD label RETURN label")
+mcp__falkordb__query_graph_readonly(graphName="{NAMESPACE}", query="CALL db.labels() YIELD label RETURN label")
 ```
 
 Run read-only Cypher:
 ```
-mcp__falkordb__query_graph_readonly(graphName="<graph-name>", query="MATCH (n) RETURN n.name LIMIT 10")
+mcp__falkordb__query_graph_readonly(graphName="{NAMESPACE}", query="MATCH (n) RETURN n.name LIMIT 10")
 ```
 
 Load data (create nodes and relationships via Cypher):
 ```
-mcp__falkordb__query_graph(graphName="<graph-name>", query="MERGE (n:Entity {id: '1', name: 'example'})")
-mcp__falkordb__query_graph(graphName="<graph-name>", query="MATCH (a:Entity {id: '1'}), (b:Entity {id: '2'}) MERGE (a)-[:RELATES_TO]->(b)")
+mcp__falkordb__query_graph(graphName="{NAMESPACE}", query="MERGE (n:Entity {id: '1', name: 'example'})")
+mcp__falkordb__query_graph(graphName="{NAMESPACE}", query="MATCH (a:Entity {id: '1'}), (b:Entity {id: '2'}) MERGE (a)-[:RELATES_TO]->(b)")
 ```
 
 **If `mcp__falkordb__*` tools are NOT available — ask the user:**
@@ -207,8 +227,8 @@ If the user enables MCP and restarts, proceed with MCP tools.
 If the user skips, use the Python fallback:
 ```python
 from falkordb import FalkorDB
-db = FalkorDB(host='localhost', port=HOST_PORT)  # replace HOST_PORT with assigned port, e.g. 54001
-g = db.select_graph('<graph-name>')
+db = FalkorDB(host='localhost', port=54010)
+g = db.select_graph('{NAMESPACE}')
 result = g.query("MATCH (n:Entity) RETURN n.name LIMIT 10")
 ```
 
@@ -242,8 +262,8 @@ mcp__mongodb__aggregate(collection="<collection>", pipeline=[{"$group": {"_id": 
 If the user skips, use the Python fallback:
 ```python
 from pymongo import MongoClient
-client = MongoClient('mongodb://lqc:lqcpass@localhost:HOST_PORT/')  # replace HOST_PORT with assigned port
-db = client['lqcdata']
+client = MongoClient('mongodb://lqc:lqcpass@localhost:54011/')
+db = client['{NAMESPACE}']
 ```
 
 #### PostgreSQL
@@ -252,8 +272,8 @@ db = client['lqcdata']
 
 Run SQL directly:
 ```
-mcp__postgres__query(sql="SELECT * FROM my_table LIMIT 10")
-mcp__postgres__query(sql="SELECT column_name, data_type FROM information_schema.columns WHERE table_name='my_table'")
+mcp__postgres__query(sql="SET search_path TO {NAMESPACE}; SELECT * FROM my_table LIMIT 10")
+mcp__postgres__query(sql="SET search_path TO {NAMESPACE}; SELECT column_name, data_type FROM information_schema.columns WHERE table_name='my_table'")
 ```
 
 Note: `mcp__postgres__query` is **read-only**. For `CREATE TABLE`, `INSERT`, or `COPY` operations, use the Python psycopg2 fallback.
@@ -272,7 +292,9 @@ Note: `mcp__postgres__query` is **read-only**. For `CREATE TABLE`, `INSERT`, or 
 If the user skips, use the Python fallback:
 ```python
 import psycopg2
-conn = psycopg2.connect(host='localhost', port=HOST_PORT, dbname='lqcdata', user='lqc', password='lqcpass')  # replace HOST_PORT with assigned port
+conn = psycopg2.connect(host='localhost', port=54012, dbname='lqcdata', user='lqc', password='lqcpass')
+cur = conn.cursor()
+cur.execute(f"SET search_path TO {'{NAMESPACE}'}")
 ```
 
 ### Step 6: Provide connection string and next steps
@@ -295,7 +317,46 @@ isolated_namespaces:
 ---
 ```
 
-If the file doesn't exist, create it. If it exists, merge: update `session_id` if this is a new session ID, append to `isolated_namespaces`.
+If the file doesn't exist, create it. If it exists, merge: update `session_id` if new, append to `isolated_namespaces`. Use this snippet:
+
+```bash
+python3 - "$NAMESPACE" "$DB" "$ISOLATION_LEVEL" "$BASE_PORT" <<'EOF'
+import sys, re, os
+from datetime import datetime, timezone
+
+namespace, db, level, port = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+p = os.path.expanduser('~/.claude/lqc-tokens.local.md')
+entry = {'db': db, 'level': level, 'namespace': namespace, 'port': int(port),
+         'started': datetime.now(timezone.utc).isoformat()}
+
+if os.path.exists(p):
+    with open(p) as f:
+        raw = f.read()
+    m = re.match(r'^(---\n)(.*?)(---\n?)(.*)', raw, re.DOTALL)
+    if m:
+        pre, fm_text, close, rest = m.groups()
+        try:
+            import yaml
+            fm = yaml.safe_load(fm_text) or {}
+            if level == 'session' and 'session_id' not in fm:
+                # session_id already written in Step 3
+                pass
+            ns_list = fm.get('isolated_namespaces') or []
+            ns_list.append(entry)
+            fm['isolated_namespaces'] = ns_list
+            new_fm = yaml.dump(fm, default_flow_style=False, sort_keys=False)
+            with open(p, 'w') as f:
+                f.write(pre + new_fm + close + rest)
+            sys.exit(0)
+        except ImportError:
+            pass
+
+# Fallback or new file
+import json
+with open(p, 'a') as f:
+    f.write(f'\n# namespace: {json.dumps(entry)}\n')
+EOF
+```
 
 **Request-scoped cleanup (do immediately after the turn ends):**
 
