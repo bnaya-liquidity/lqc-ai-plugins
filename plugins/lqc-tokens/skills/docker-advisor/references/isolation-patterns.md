@@ -60,9 +60,10 @@ Database is created on first write.
 
 **Use namespace (MCP path):**
 ```
-mcp__mongodb__find(collection="lqc_{id}.tickets", filter={}, limit=20)
+mcp__mongodb__find(collection="tickets", filter={}, limit=20)
+mcp__mongodb__aggregate(collection="tickets", pipeline=[{"$group": {"_id": "$category", "count": {"$sum": 1}}}])
 ```
-Note: MongoDB MCP tools accept `database.collection` dot notation or configure the server with `--connectionString` pointing to the specific database.
+Note: For namespace isolation with MCP, configure the server `--connectionString` to include the namespace database: `mongodb://lqc:lqcpass@localhost:54011/lqc_{id}`. Restart Claude Code with the updated `.mcp.json` after creating the namespace. For Python path, select the database directly — no restart needed.
 
 **Use namespace (Python path):**
 ```python

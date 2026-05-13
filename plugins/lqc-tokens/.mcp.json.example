@@ -11,7 +11,7 @@
       "type": "stdio",
       "env": {
         "FALKORDB_HOST": "localhost",
-        "FALKORDB_PORT": "6379",
+        "FALKORDB_PORT": "54010",
         "FALKORDB_USERNAME": "",
         "FALKORDB_PASSWORD": "",
         "FALKORDB_DEFAULT_READONLY": "true"
@@ -23,7 +23,7 @@
         "-y",
         "mongodb-mcp-server",
         "--connectionString",
-        "mongodb://lqc:lqcpass@localhost:27017/lqcdata",
+        "mongodb://lqc:lqcpass@localhost:54011/",
         "--readOnly"
       ],
       "type": "stdio"
@@ -33,7 +33,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-postgres",
-        "postgresql://lqc:lqcpass@localhost:5432/lqcdata"
+        "postgresql://lqc:lqcpass@localhost:54012/lqcdata"
       ],
       "type": "stdio"
     }
