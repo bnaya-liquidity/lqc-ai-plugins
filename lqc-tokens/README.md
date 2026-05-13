@@ -4,11 +4,21 @@ Token cost optimizer plugin for Claude Code. Reduces context waste through pre-p
 
 ## Installation
 
-Copy this directory to your project's `.claude-plugin/` or install via the Claude Code plugin marketplace.
+**Option 1 — Local project:**
+Copy this directory to `.claude/plugins/lqc-tokens/` in your project root, then restart Claude Code.
 
-Run setup after installing:
+**Option 2 — CLI flag:**
+```
+claude --plugin-dir /path/to/lqc-tokens
+```
 
-    /lqc-tokens:setup
+**Option 3 — Marketplace:**
+Install via the Claude Code plugin marketplace (org admins only).
+
+After installing, run setup:
+```
+/lqc-tokens:setup
+```
 
 ## Skills
 
