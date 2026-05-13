@@ -21,10 +21,14 @@ Use FalkorDB when your task involves entities with relationships. Instead of loa
 
 ## Setup (if not done via docker-advisor)
 
+For isolated setup without port conflicts, use host port 16379 (avoids collision with local Redis on 6379):
+
 ```bash
-docker run -d --name falkordb -p 6379:6379 falkordb/falkordb:latest
+docker run -d --name falkordb -p 16379:6379 falkordb/falkordb:latest
 pip install falkordb
 ```
+
+If you used `docker-advisor` to set up FalkorDB, use the port it assigned instead.
 
 ## Schema design for Claude
 
@@ -39,7 +43,7 @@ CREATE (:Service {name: 'auth-service'})-[:DEPENDS_ON]->(:Service {name: 'postgr
 
 **How to tell Claude the schema** (put this in the prompt, not the data):
 ```
-FalkorDB graph is running at localhost:6379, graph name: 'services'.
+FalkorDB graph is running at localhost:16379, graph name: 'services'.
 Nodes: Service {name, language, team}, Database {name, type}
 Edges: DEPENDS_ON, CALLS, OWNS
 ```

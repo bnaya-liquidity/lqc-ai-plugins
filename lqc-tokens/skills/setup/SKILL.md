@@ -25,7 +25,7 @@ Compare against plugin version `0.1.0`.
 
 Find `CLAUDE.md` in the project root. If it doesn't exist, create it with just this block.
 
-If upgrading, find and replace the existing `## Token Cost Optimization` block. If fresh install, append to the end of the file.
+If upgrading, find and replace the block from the line `## Token Cost Optimization (lqc-tokens v` through the last bullet line starting with `- When session context drifts` (inclusive). Replace the entire range with the new block below. If fresh install, append to the end of the file.
 
 Block to inject:
 ```markdown
@@ -67,20 +67,19 @@ Ask the user:
 > "Configure Docker MCP for live container management? This lets docker-advisor actually spin up containers instead of only generating compose files. (yes/no)"
 
 If yes:
-1. Read `.mcp.json` from project root (or create it if it doesn't exist)
-2. Add the docker server entry if not already present:
-```json
-{
-  "mcpServers": {
-    "docker": {
-      "command": "docker",
-      "args": ["mcp", "gateway", "run"],
-      "type": "stdio"
-    }
-  }
-}
-```
-3. Confirm: "Docker MCP configured. Restart Claude Code for it to take effect."
+1. Read `.mcp.json` from project root, or start with `{}` if it doesn't exist
+2. Parse the JSON. Check if `mcpServers.docker` already exists — if so, skip (already configured)
+3. If `mcpServers` key is absent, add it as an empty object first
+4. Add ONLY the `docker` key under `mcpServers`, preserving all other existing server entries:
+   ```json
+   "docker": {
+     "command": "docker",
+     "args": ["mcp", "gateway", "run"],
+     "type": "stdio"
+   }
+   ```
+5. Write the merged JSON back to `.mcp.json` with 2-space indentation
+6. Confirm: "Docker MCP configured. Restart Claude Code for it to take effect."
 
 If no: skip.
 
