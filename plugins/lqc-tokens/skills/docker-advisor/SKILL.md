@@ -62,7 +62,10 @@ Write the composed file to the user's project root as `docker-compose.lqc.yml`.
 
 ### Step 6: Query the database
 
-Once the container is healthy, check whether a DB-native MCP server is available. Use the MCP path when present — it avoids Python process overhead and keeps queries in-context as structured tool calls.
+Once the container is healthy, check whether a DB-native MCP server is available.
+
+**If MCP tools are present:** use them — 1 tool call per query vs 3+ with Python.
+**If MCP tools are absent:** ask the user if they want to enable them before falling back to Python.
 
 #### FalkorDB
 
@@ -85,15 +88,25 @@ mcp__falkordb__query_graph(graphName="<graph-name>", query="MERGE (n:Entity {id:
 mcp__falkordb__query_graph(graphName="<graph-name>", query="MATCH (a:Entity {id: '1'}), (b:Entity {id: '2'}) MERGE (a)-[:RELATES_TO]->(b)")
 ```
 
-**Fallback (no FalkorDB MCP):** Use Python client:
+**If `mcp__falkordb__*` tools are NOT available — ask the user:**
+
+> "FalkorDB MCP is not enabled. Enabling it cuts query token cost ~70% (1 tool call instead of Python subprocess + parsing).
+>
+> **Enable now (recommended):**
+> 1. Copy `.mcp.json.example` → `.mcp.json` in your project root
+> 2. Edit `.mcp.json`: set `FALKORDB_PORT` to `{HOST_PORT}` under the `falkordb` server env
+> 3. Restart Claude Code to load the MCP server
+>
+> **Skip for now:** I'll use Python instead — you can enable MCP later for future sessions."
+
+If the user enables MCP and restarts, proceed with MCP tools.
+If the user skips, use the Python fallback:
 ```python
 from falkordb import FalkorDB
 db = FalkorDB(host='localhost', port=HOST_PORT)  # replace HOST_PORT with assigned port, e.g. 54001
 g = db.select_graph('<graph-name>')
 result = g.query("MATCH (n:Entity) RETURN n.name LIMIT 10")
 ```
-
-**Also remind user:** copy `.mcp.json.example` → `.mcp.json` and set `FALKORDB_PORT` to the assigned port so the MCP server connects to the correct container.
 
 #### MongoDB
 
@@ -111,14 +124,23 @@ mcp__mongodb__count(collection="<collection>", filter={})
 mcp__mongodb__aggregate(collection="<collection>", pipeline=[{"$group": {"_id": "$field", "count": {"$sum": 1}}}])
 ```
 
-**Fallback (no MongoDB MCP):**
+**If `mcp__mongodb__*` tools are NOT available — ask the user:**
+
+> "MongoDB MCP is not enabled. Enabling it cuts query token cost ~70% (direct tool calls instead of Python subprocess).
+>
+> **Enable now (recommended):**
+> 1. Copy `.mcp.json.example` → `.mcp.json` in your project root
+> 2. Edit `.mcp.json`: update the MongoDB `--connectionString` arg — replace `27017` with `{HOST_PORT}`
+> 3. Restart Claude Code to load the MCP server
+>
+> **Skip for now:** I'll use Python instead."
+
+If the user skips, use the Python fallback:
 ```python
 from pymongo import MongoClient
 client = MongoClient('mongodb://lqc:lqcpass@localhost:HOST_PORT/')  # replace HOST_PORT with assigned port
 db = client['lqcdata']
 ```
-
-**Also remind user:** copy `.mcp.json.example` → `.mcp.json` and update the `--connectionString` port.
 
 #### PostgreSQL
 
@@ -132,13 +154,22 @@ mcp__postgres__query(sql="SELECT column_name, data_type FROM information_schema.
 
 Note: `mcp__postgres__query` is **read-only**. For `CREATE TABLE`, `INSERT`, or `COPY` operations, use the Python psycopg2 fallback.
 
-**Fallback (no Postgres MCP):**
+**If `mcp__postgres__*` tools are NOT available — ask the user:**
+
+> "Postgres MCP is not enabled. Enabling it lets me run SQL queries directly (read-only) without Python subprocess overhead.
+>
+> **Enable now (recommended):**
+> 1. Copy `.mcp.json.example` → `.mcp.json` in your project root
+> 2. Edit `.mcp.json`: update the Postgres connection string — replace `5432` with `{HOST_PORT}`
+> 3. Restart Claude Code to load the MCP server
+>
+> **Skip for now:** I'll use Python instead. Note: Python fallback supports writes (INSERT/COPY) too."
+
+If the user skips, use the Python fallback:
 ```python
 import psycopg2
 conn = psycopg2.connect(host='localhost', port=HOST_PORT, dbname='lqcdata', user='lqc', password='lqcpass')  # replace HOST_PORT with assigned port
 ```
-
-**Also remind user:** copy `.mcp.json.example` → `.mcp.json` and update the connection string port.
 
 ### Step 7: Provide connection string and next steps
 

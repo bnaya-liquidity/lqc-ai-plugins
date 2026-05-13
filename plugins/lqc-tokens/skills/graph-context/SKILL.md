@@ -32,7 +32,21 @@ docker run -d --name falkordb -p 16379:6379 \
 
 If you used `docker-advisor` to set up FalkorDB, use the port it assigned instead.
 
-## Querying — MCP path (preferred)
+## Querying
+
+**If `mcp__falkordb__*` tools are in scope:** proceed with the MCP path below.
+**If not:** ask the user whether to enable MCP before falling back to Python.
+
+> "FalkorDB MCP is not enabled. Enabling it cuts query token cost ~70% (1 tool call instead of Python subprocess + parsing).
+>
+> **Enable now (recommended):**
+> 1. Copy `.mcp.json.example` → `.mcp.json` in your project root
+> 2. Set `FALKORDB_PORT` to your container's assigned port under the `falkordb` server env
+> 3. Restart Claude Code
+>
+> **Skip for now:** I'll use the Python client instead."
+
+### MCP path (preferred)
 
 When `mcp__falkordb__*` tools are in scope, query FalkorDB directly without spawning Python:
 
@@ -62,7 +76,7 @@ Embed values directly in the query string — the tool does not accept a separat
 
 **Connection:** The MCP server reads `FALKORDB_HOST` and `FALKORDB_PORT` from its env. Copy `.mcp.json.example` → `.mcp.json` and set `FALKORDB_PORT` to the port assigned by docker-advisor.
 
-## Querying — Python fallback (when MCP not available)
+### Python fallback (if user skips MCP setup)
 
 ```python
 from falkordb import FalkorDB
