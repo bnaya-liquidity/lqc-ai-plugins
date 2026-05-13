@@ -165,6 +165,35 @@
           "type": "content_check"
         }
       ]
+    },
+    {
+      "id": 8,
+      "name": "docker-advisor-isolation-level-prompt",
+      "prompt": "I have a CSV of 10,000 customer records I need to analyze for this conversation. Please set up the database.",
+      "context": "No MCP tools available. No base container running (docker ps returns empty). This is a new session with no session_id in lqc-tokens.local.md.",
+      "expected_output": "docker-advisor asks the isolation level question with session pre-selected as the default. It starts lqc-base-postgres (tabular CSV → Postgres), writes docker-compose.lqc-base.yml with container_name: lqc-base-postgres and port 54012, creates a schema lqc_sess_{id}, and writes session_id + isolated_namespaces entry to lqc-tokens.local.md. Does NOT ask 'Is this data needed after today?' and does NOT create a random-UUID container.",
+      "assertions": [
+        {
+          "text": "Skill presents isolation level options with session as the recommended/default choice",
+          "type": "content_check"
+        },
+        {
+          "text": "Generated compose file uses container_name: lqc-base-postgres and port 54012, NOT a random UUID name or random port",
+          "type": "content_check"
+        },
+        {
+          "text": "Skill creates a Postgres schema named lqc_sess_{id} (not a new database or new container)",
+          "type": "content_check"
+        },
+        {
+          "text": "Tracking entry written to lqc-tokens.local.md uses isolated_namespaces structure (not ephemeral_containers)",
+          "type": "content_check"
+        },
+        {
+          "text": "Old 'Is this data needed after today?' question does NOT appear",
+          "type": "absence_check"
+        }
+      ]
     }
   ]
 }

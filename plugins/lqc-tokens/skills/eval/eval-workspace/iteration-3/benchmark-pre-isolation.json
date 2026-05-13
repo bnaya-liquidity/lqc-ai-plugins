@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "skill_name": "docker-advisor",
+    "iteration": "3-pre-isolation",
+    "timestamp": "2026-05-13T00:00:00Z",
+    "note": "Baseline before docker-spinup-optimization. docker-advisor creates a new container per ephemeral use (2-5s startup per call). Isolation-level flow not yet present."
+  },
+  "baseline_behavior": {
+    "spinup_model": "per-use-ephemeral",
+    "step_3_question": "Is this data needed after today?",
+    "step_4_action": "writes docker-compose.lqc.yml with new random container name + random port",
+    "startup_cost_ms": "2000-5000 (first use per session)",
+    "cleanup": "stops and removes container at session end"
+  },
+  "target_behavior": {
+    "spinup_model": "shared-base-container",
+    "step_3_question": "Isolation level: session (default) / request / user",
+    "step_4_action": "starts lqc-base-{db} once, creates lightweight namespace (<10ms)",
+    "startup_cost_ms": "0 (if base container already running)",
+    "cleanup": "drops namespace only (container stays alive)"
+  }
+}
