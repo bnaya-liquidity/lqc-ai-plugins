@@ -26,6 +26,26 @@ Claude Code sessions accumulate token costs silently. Users develop bad prompt h
 | Version | `0.1.0` |
 | Description | Token cost optimizer: pre-prompt advice, Docker DB advisor, session reporting |
 
+### 2.1 Versioning Strategy
+
+The plugin uses **semantic versioning** (`MAJOR.MINOR.PATCH`):
+
+- `PATCH` — bug fixes to hook prompts, typos, reference updates
+- `MINOR` — new skills, new DB templates, new trigger patterns (backwards compatible)
+- `MAJOR` — breaking changes to settings schema, hook behavior, or component removal
+
+**Version is tracked in two places:**
+1. `plugin.json` — the authoritative version field, read by the Claude Code plugin loader
+2. `CHANGELOG.md` — human-readable history of what changed per version
+
+**Update mechanism**: When the `setup` skill is re-run, it checks the installed version against the latest and shows a diff of what changed. The CLAUDE.md entry includes the version so users can see if they're running an old installation:
+
+```markdown
+## Token Cost Optimization (lqc-tokens v0.1.0)
+```
+
+The `setup` skill is idempotent — re-running it upgrades the CLAUDE.md entry to the new version string without duplicating the block.
+
 ---
 
 ## 3. Component Inventory
@@ -282,7 +302,8 @@ The `docker-advisor` skill gracefully degrades if this is not configured: it gen
 
 ```
 lqc-tokens/
-├── plugin.json
+├── plugin.json                         # Authoritative version field
+├── CHANGELOG.md                        # Per-version history
 ├── README.md
 ├── .gitignore                          # .claude/*.local.md
 ├── .mcp.json.example                   # Docker MCP config template
@@ -300,6 +321,7 @@ lqc-tokens/
 │   │   ├── SKILL.md
 │   │   ├── references/
 │   │   │   ├── db-selection-guide.md   # DB choice criteria
+│   │   │   ├── trigger-catalog.md      # Prompt patterns that trigger this skill
 │   │   │   └── docker-compose-templates/ # Template compose files per DB
 │   │   └── examples/
 │   │       └── example-session.md      # Worked example
@@ -309,8 +331,10 @@ lqc-tokens/
 │   │       └── falkordb-patterns.md    # Schema + Cypher patterns
 │   ├── session-hygiene/
 │   │   └── SKILL.md
-│   └── setup/
-│       └── SKILL.md
+│   ├── setup/
+│   │   └── SKILL.md
+│   └── eval/
+│       └── SKILL.md                    # /lqc-tokens:eval — token savings + accuracy report
 ```
 
 ---
@@ -325,7 +349,103 @@ lqc-tokens/
 
 ---
 
-## 10. Out of Scope (v1)
+## 10. Evaluation Strategy
+
+The plugin must demonstrate real value across three dimensions: token savings, accuracy improvement, and context management quality. Evaluation is built into the plugin itself — not a separate tool.
+
+### 10.1 Token Savings
+
+**Baseline measurement** (collected by `setup` skill on first run):
+- Run `analyze-sessions.mjs` from session-report to capture the last 7 days of token usage as a pre-install baseline, saved to `.claude/lqc-tokens-baseline.json`
+
+**Ongoing measurement**:
+- The `Stop` hook records per-session token totals to `.claude/lqc-tokens-log.jsonl` (one line per session: `{date, session_id, input_tokens, output_tokens, cache_hits}`)
+- After 7+ days of use, the log provides a comparable post-install sample
+
+**Eval skill** (`/lqc-tokens:eval`):
+- Reads baseline + log
+- Computes: average tokens/session before vs. after, cache hit rate delta, % of sessions where the pre-prompt hook fired and the user accepted the suggestion
+- Reports: "Estimated token savings: N% reduction over 7 days vs. baseline"
+
+### 10.2 Accuracy & Context Management Quality
+
+Accuracy is harder to measure objectively. The plugin uses **self-reported signals**:
+
+1. **Prompt acceptance rate**: when the pre-prompt hook suggests a prompt rewrite or DB strategy, did the user accept or dismiss? Tracked in the log as `{hook_fired, suggestion_accepted}`.
+2. **Session length distribution**: are sessions shorter (suggesting context is staying clean) or do they still balloon? Measured by turn count + total tokens per session over time.
+3. **Docker advisor adoption**: how often did docker-advisor fire and the user proceeded with a DB strategy? Each adoption is a context-offload event — tracked as `{docker_suggested, docker_adopted, db_type}`.
+4. **New session rate**: did `session-hygiene` suggestions lead to session resets? Tracks `{hygiene_fired, new_session_started}`.
+
+### 10.3 Eval Report
+
+The `/lqc-tokens:eval` skill generates a summary:
+
+```
+lqc-tokens evaluation (2026-05-13 → 2026-05-20)
+────────────────────────────────────────────────
+Token savings:     -34% avg tokens/session vs. baseline
+Cache hit rate:    +12pp (61% → 73%)
+Hook acceptance:   68% of pre-prompt suggestions accepted
+DB advisor:        4 sessions used Docker strategy (3 FalkorDB, 1 Postgres)
+Session hygiene:   2 new sessions started on suggestion
+────────────────────────────────────────────────
+Recommendation: hook is effective; consider reducing prompt-rewrite threshold
+                (currently fires on >2KB paste — try >4KB to reduce noise)
+```
+
+### 10.4 Trigger Prompt Catalog
+
+The pre-prompt hook and docker-advisor skill use this catalog to detect data-heavy or context-heavy tasks. Triggers are grouped by category:
+
+**Document / file ingestion triggers:**
+- "read the following document(s)"
+- "here is the file / here are the files"
+- "I'm attaching / I'm pasting the contents of"
+- "analyze this report / review this document"
+- "the following is the full text of"
+- "read through all of these"
+
+**Tabular / spreadsheet data triggers:**
+- "refer to this CSV / Excel / spreadsheet"
+- "here is the data export"
+- "I have a table with N rows"
+- "the data looks like: [column headers]"
+- "loaded from a database / pulled from BigQuery / exported from Salesforce"
+- "here are the records"
+
+**Web / scraped data triggers:**
+- "I scraped / downloaded this from"
+- "here is the webpage content"
+- "pull data from this URL"
+- "fetch and analyze this site"
+- "summarize the following web page"
+
+**Bulk / multi-file triggers:**
+- "go through all the files in"
+- "process every record in"
+- "for each item in this list"
+- "scan the entire codebase for"
+- "read all logs from"
+
+**Relationship / graph triggers (→ graph-context):**
+- "map the relationships between"
+- "find all connections from X to Y"
+- "who is connected to / depends on"
+- "trace the dependency chain"
+- "build a knowledge graph of"
+- "find paths between"
+
+**Long session / context drift triggers (→ session-hygiene):**
+- "now let's switch to" (after 10+ turns)
+- "on a different topic" (after 10+ turns)
+- "separate question" (after 10+ turns)
+- Prompt turn count ≥ 15 regardless of content
+
+These trigger patterns are documented in `skills/docker-advisor/references/trigger-catalog.md` and updated as new patterns are discovered.
+
+---
+
+## 11. Out of Scope (v1)
 
 - Automatic prompt rewriting without user confirmation
 - Cost billing integration (no API key management)
