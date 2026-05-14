@@ -1,0 +1,101 @@
+company_id,company_name,industry,country
+1,Company_001,Automotive,USA
+2,Company_002,Energy,Germany
+3,Company_003,Medical,Germany
+4,Company_004,Automotive,Canada
+5,Company_005,Automotive,South Korea
+6,Company_006,Telecom,USA
+7,Company_007,Electronics,USA
+8,Company_008,Medical,Germany
+9,Company_009,Electronics,South Korea
+10,Company_010,Medical,Canada
+11,Company_011,Telecom,Germany
+12,Company_012,Consumer Goods,South Korea
+13,Company_013,Energy,USA
+14,Company_014,Industrial,Canada
+15,Company_015,Telecom,Japan
+16,Company_016,Energy,Germany
+17,Company_017,Medical,Japan
+18,Company_018,Automotive,USA
+19,Company_019,Telecom,USA
+20,Company_020,Aerospace,Japan
+21,Company_021,Energy,USA
+22,Company_022,Consumer Goods,South Korea
+23,Company_023,Automotive,Israel
+24,Company_024,Automotive,South Korea
+25,Company_025,Energy,Canada
+26,Company_026,Aerospace,South Korea
+27,Company_027,Medical,Canada
+28,Company_028,Automotive,USA
+29,Company_029,Medical,Japan
+30,Company_030,Automotive,Germany
+31,Company_031,Automotive,Israel
+32,Company_032,Energy,Israel
+33,Company_033,Aerospace,Germany
+34,Company_034,Aerospace,Japan
+35,Company_035,Medical,Canada
+36,Company_036,Energy,Canada
+37,Company_037,Automotive,South Korea
+38,Company_038,Industrial,South Korea
+39,Company_039,Medical,Germany
+40,Company_040,Consumer Goods,Israel
+41,Company_041,Energy,Canada
+42,Company_042,Medical,Canada
+43,Company_043,Aerospace,USA
+44,Company_044,Medical,USA
+45,Company_045,Aerospace,Israel
+46,Company_046,Energy,USA
+47,Company_047,Medical,South Korea
+48,Company_048,Aerospace,Germany
+49,Company_049,Consumer Goods,Israel
+50,Company_050,Consumer Goods,Germany
+51,Company_051,Energy,Germany
+52,Company_052,Medical,Canada
+53,Company_053,Energy,Canada
+54,Company_054,Telecom,South Korea
+55,Company_055,Telecom,Japan
+56,Company_056,Medical,Germany
+57,Company_057,Consumer Goods,USA
+58,Company_058,Electronics,USA
+59,Company_059,Industrial,Canada
+60,Company_060,Industrial,Canada
+61,Company_061,Telecom,South Korea
+62,Company_062,Automotive,Israel
+63,Company_063,Telecom,South Korea
+64,Company_064,Consumer Goods,South Korea
+65,Company_065,Energy,South Korea
+66,Company_066,Electronics,Canada
+67,Company_067,Automotive,Canada
+68,Company_068,Energy,Canada
+69,Company_069,Aerospace,USA
+70,Company_070,Energy,Israel
+71,Company_071,Industrial,Israel
+72,Company_072,Electronics,Canada
+73,Company_073,Energy,South Korea
+74,Company_074,Industrial,South Korea
+75,Company_075,Automotive,Canada
+76,Company_076,Energy,Canada
+77,Company_077,Medical,Germany
+78,Company_078,Aerospace,Germany
+79,Company_079,Electronics,South Korea
+80,Company_080,Aerospace,Israel
+81,Company_081,Electronics,USA
+82,Company_082,Aerospace,Japan
+83,Company_083,Medical,USA
+84,Company_084,Medical,South Korea
+85,Company_085,Automotive,USA
+86,Company_086,Consumer Goods,USA
+87,Company_087,Industrial,Germany
+88,Company_088,Consumer Goods,South Korea
+89,Company_089,Industrial,Japan
+90,Company_090,Telecom,Germany
+91,Company_091,Medical,Canada
+92,Company_092,Energy,Israel
+93,Company_093,Aerospace,Israel
+94,Company_094,Consumer Goods,USA
+95,Company_095,Medical,Germany
+96,Company_096,Automotive,Japan
+97,Company_097,Electronics,South Korea
+98,Company_098,Medical,South Korea
+99,Company_099,Medical,USA
+100,Company_100,Automotive,Canada

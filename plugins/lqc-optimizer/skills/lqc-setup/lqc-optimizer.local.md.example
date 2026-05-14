@@ -1,0 +1,17 @@
+---
+session_id: sess_a1b2c3d4
+isolated_namespaces:
+  - db: falkordb
+    level: session
+    namespace: lqc_sess_a1b2c3d4
+    port: 54010
+    started: "2026-05-13T10:30:00Z"
+  - db: postgres
+    level: request
+    namespace: lqc_req_ff2e9a01
+    port: 54012
+    started: "2026-05-13T10:31:00Z"
+ephemeral_containers: []
+---
+
+Managed by lqc-optimizer plugin. Do not edit manually.

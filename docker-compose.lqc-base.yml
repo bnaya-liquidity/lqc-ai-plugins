@@ -1,0 +1,34 @@
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    container_name: lqc-base-falkordb
+    ports:
+      - "54010:6379"
+    volumes:
+      - lqc-base-falkordb-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+  postgres:
+    image: postgres:16-alpine
+    container_name: lqc-base-postgres
+    ports:
+      - "54012:5432"
+    volumes:
+      - lqc-base-postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: lqcdata
+      POSTGRES_USER: lqc
+      POSTGRES_PASSWORD: lqcpass
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lqc -d lqcdata"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+volumes:
+  lqc-base-falkordb-data:
+  lqc-base-postgres-data:
